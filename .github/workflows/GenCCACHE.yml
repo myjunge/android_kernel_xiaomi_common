@@ -349,11 +349,8 @@ jobs:
                CROSS_COMPILE="aarch64-linux-gnu-" \
                CC="ccache clang" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
-               LLVM_IAS=1 \
                LD="ld.lld" \
                HOSTLD=ld.lld \
-               KCFLAGS+=-O2 \
-               KCFLAGS+=-Wno-error \
                gki_defconfig
 
           time make -j$(nproc --all) \
@@ -363,11 +360,8 @@ jobs:
                CC="$(pwd)/cc-wrapper" \
                LD="$(pwd)/ld-wrapper" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
-               LLVM_IAS=1 \
                LD="ld.lld" \
                HOSTLD=ld.lld \
-               KCFLAGS+=-O2 \
-               KCFLAGS+=-Wno-error \
                Image
 
           rm -rf $GITHUB_WORKSPACE/android-kernel/out
@@ -378,11 +372,8 @@ jobs:
                CROSS_COMPILE="aarch64-linux-gnu-" \
                CC="ccache clang" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
-               LLVM_IAS=1 \
                LD="ld.lld" \
                HOSTLD=ld.lld \
-               KCFLAGS+=-O2 \
-               KCFLAGS+=-Wno-error \
                gki_defconfig
 
           time make -j$(nproc --all) \
@@ -392,9 +383,6 @@ jobs:
                CC="$(pwd)/cc-wrapper" \
                LD="$(pwd)/ld-wrapper" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
-               LLVM_IAS=1 \
                LD="ld.lld" \
                HOSTLD=ld.lld \
-               KCFLAGS+=-O2 \
-               KCFLAGS+=-Wno-error \
                Image
