@@ -418,7 +418,7 @@ jobs:
                LD="$(pwd)/ld-wrapper" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
                LLVM_IAS=1 \
-               V=1
+               Image
 
           # [ -f "$GITHUB_WORKSPACE/android-kernel/out/android12-5.10/dist/Image" ] || { exit 1; }
           [ -f "$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image" ] || { exit 1; }
