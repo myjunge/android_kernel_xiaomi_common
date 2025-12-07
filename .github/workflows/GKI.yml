@@ -350,6 +350,7 @@ jobs:
 
           cd $GITHUB_WORKSPACE/android-kernel
           cd ./common/
+          git add -vA
           git reset --hard HEAD
           rm -rf $GITHUB_WORKSPACE/android-kernel/out/android12-5.10
           echo "CONFIG_KSU=y" >> arch/arm64/configs/gki_defconfig
@@ -404,7 +405,7 @@ jobs:
                LLVM_IAS=1 \
                gki_defconfig
 
-          make -j$(nproc --all) \
+          time make -j$(nproc --all) \
                LLVM=1 \
                ARCH=arm64 \
                CROSS_COMPILE="aarch64-linux-gnu-" \
@@ -454,6 +455,7 @@ jobs:
 
           cd $GITHUB_WORKSPACE/android-kernel
           cd ./common/
+          git add -vA
           git reset --hard HEAD
           rm -rf $GITHUB_WORKSPACE/android-kernel/out/android12-5.10
           echo "CONFIG_KSU=n" >> arch/arm64/configs/gki_defconfig
@@ -508,7 +510,7 @@ jobs:
                LLVM_IAS=1 \
                gki_defconfig
 
-          make -j$(nproc --all) \
+          time make -j$(nproc --all) \
                LLVM=1 \
                ARCH=arm64 \
                CROSS_COMPILE="aarch64-linux-gnu-" \
