@@ -19,7 +19,10 @@
 ```bash
 git clone -b Rebase --single-branch --recurse-submodules https://github.com/dopaemon/android_kernel_xiaomi_common.git
 ```
-* **Lindroid:**
-```bash
-git clone -b lindroid --single-branch --recurse-submodules https://github.com/dopaemon/android_kernel_xiaomi_common.git
-```
+* [**Other Branch**](https://github.com/dopaemon/android_kernel_xiaomi_common/branches)
+
+# By
+* [**dopaemon**](https://github.com/dopaemon)
+
+# Support Group
+* [**Telegram**](https://t.me/TotoroNK)
