@@ -37,14 +37,6 @@ on:
         description: 'Kernel Manifest Git'
         required: true
         default: 'https://github.com/dopaemon/android_kernel_xiaomi_common.git'
-      CLANG_PREBUILT:
-        description: 'Custom Clang Prebuilt Git'
-        required: true
-        default: 'https://gitlab.com/vermouth/android_prebuilts_clang_host_linux-x86_clang-r536225.git'
-      CLANG_BRANCH:
-        description: 'Custom Clang Prebuilt Branch'
-        required: true
-        default: '14.0'
       BUILD_TARGET:
         description: 'Specify your Build Target (lindroid only KSU)'
         required: true
@@ -248,7 +240,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: android-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b
-          key: clang-${{ github.event.inputs.CLANG_BRANCH }}
+          key: clang-${{ github.event.inputs.KERNEL_BRANCH }}
           restore-keys: |
             clang-
 
@@ -293,7 +285,7 @@ jobs:
           echo "CCACHE_DIR=$CCACHE_DIR" >> $GITHUB_ENV
           echo "CCACHE_BASEDIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
 
-      - name: Cache CCACHE
+      - name: Get Cache CCACHE
         id: cache-ccache
         uses: actions/cache@v4
         with:
@@ -302,7 +294,7 @@ jobs:
           restore-keys: |
             ccache-${{ matrix.device }}-
 
-      - name: Setup CCACHE
+      - name: Complete Setup CCACHE
         run: |
           ccache --set-config=cache_dir=${{ env.CCACHE_DIR }}
           ccache --set-config=max_size=5G
@@ -413,8 +405,7 @@ jobs:
                CC="$(pwd)/cc-wrapper" \
                LD="$(pwd)/ld-wrapper" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
-               LLVM_IAS=1 \
-               Image
+               LLVM_IAS=1
 
           # [ -f "$GITHUB_WORKSPACE/android-kernel/out/android12-5.10/dist/Image" ] || { exit 1; }
           [ -f "$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image" ] || { exit 1; }
