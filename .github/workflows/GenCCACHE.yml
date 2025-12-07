@@ -17,7 +17,7 @@ on:
       BUILD_DEVICE:
         description: 'Device Target'
         required: true
-        default: 'mayfly'
+        default: 'all'
         type: choice
         options:
         - all
