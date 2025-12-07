@@ -54,10 +54,6 @@ on:
         options:
         - Yes
         - No
-      ANYKERNEL_GIT:
-        description: 'AnyKernel3 Git'
-        required: true
-        default: 'https://github.com/dopaemon/Anykernel3.git'
       RELEASE:
         description: 'Status Release'
         required: true
@@ -208,9 +204,9 @@ jobs:
           wget -O ./build/_setup_env.sh https://raw.githubusercontent.com/dopaemon/android_kernel_xiaomi_common/refs/heads/master/.github/scripts/_setup_env.sh
           chmod +x ./build/_setup_env.sh
           if [ "$TARGET" != "Both" ]; then
-             git clone -b master --depth=1 --single-branch ${{ github.event.inputs.ANYKERNEL_GIT }} ./AnyKernel3
+             git clone -b master --depth=1 --single-branch https://github.com/dopaemon/Anykernel3.git ./AnyKernel3
           else
-             git clone -b volume --depth=1 --single-branch ${{ github.event.inputs.ANYKERNEL_GIT }} ./AnyKernel3
+             git clone -b volume --depth=1 --single-branch https://github.com/dopaemon/Anykernel3.git ./AnyKernel3
           fi
           rm -rf ./AnyKernel3/.git
           rm -rf ${{ github.workspace }}/android-kernel/prebuilts/build-tools
