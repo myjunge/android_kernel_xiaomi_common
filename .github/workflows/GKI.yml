@@ -199,8 +199,6 @@ jobs:
           rm -rf ./build/_setup_env.sh
           wget -O ./build/_setup_env.sh https://raw.githubusercontent.com/dopaemon/android_kernel_xiaomi_common/refs/heads/master/.github/scripts/_setup_env.sh
           chmod +x ./build/_setup_env.sh
-          git clone -b lineage-23.0 --single-branch --depth=1 https://github.com/dopaemon/android_kernel_xiaomi_sm8450-modules.git sm8450-modules
-          git clone -b lineage-23.0 --single-branch --depth=1 https://github.com/dopaemon/android_kernel_xiaomi_sm8450-devicetrees.git sm8450-devicetrees
           if [ "$TARGET" != "Both" ]; then
              git clone -b master --depth=1 --single-branch ${{ github.event.inputs.ANYKERNEL_GIT }} ./AnyKernel3
           else
@@ -212,6 +210,20 @@ jobs:
           cd ${{ github.workspace }}/android-kernel/prebuilts
           git clone -b build-tools --single-branch --depth=1 https://github.com/dopaemon/android_kernel_xiaomi_common.git ${{ github.workspace }}/android-kernel/prebuilts/build-tools
           git clone -b build-tools --single-branch --depth=1 https://github.com/dopaemon/android_kernel_xiaomi_common.git ${{ github.workspace }}/android-kernel/prebuilts/kernel-build-tools
+
+      - name: Get SM8450 Trees
+        run: |
+          git clone -b lineage-23.0 \
+              --single-branch \
+              --depth=1 \
+              https://github.com/dopaemon/android_kernel_xiaomi_sm8450-devicetrees.git \
+              $GITHUB_WORKSPACE/android-kernel/sm8450-devicetrees
+
+          git clone -b lineage-23.0 \
+              --single-branch \
+              --depth=1 \
+              https://github.com/dopaemon/android_kernel_xiaomi_sm8450-modules.git \
+              $GITHUB_WORKSPACE/android-kernel/sm8450-modules
 
       - name: Cache Kernel
         id: cache-kernel
