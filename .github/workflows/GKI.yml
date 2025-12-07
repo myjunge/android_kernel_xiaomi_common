@@ -442,7 +442,7 @@ jobs:
           ZIP_NAME=""
           rm -rf $GITHUB_WORKSPACE/android-kernel/out
 
-          export CCACHE_LOGFILE='${{ github.workspace }}/$DEVICE-NonKSU-ccache.log'
+          export CCACHE_LOGFILE="${{ github.workspace }}/$DEVICE-NonKSU-ccache.log"
           export CCACHE_COMPILERCHECK="none"
           export CCACHE_BASEDIR="${{ github.workspace }}"
           export CCACHE_NOHASHDIR="true"
