@@ -331,10 +331,6 @@ jobs:
           echo "FAKESTAT=$FAKESTAT" >> $GITHUB_ENV
           echo "FAKETIME=$FAKETIME" >> $GITHUB_ENV
 
-      - name: Checked Symlink File
-        run: |
-          ls -lash $GITHUB_WORKSPACE/android-kernel/common/arch/arm64/boot/dts/vendor/qcom/
-
       - name: Build Selected Devices KSU
         if: (github.event.inputs.BUILD_TARGET == 'KSU' || github.event.inputs.BUILD_TARGET == 'Both') && github.event.inputs.KERNEL_BRANCH == 'Rebase'
         run: |
@@ -421,7 +417,8 @@ jobs:
                CC="$(pwd)/cc-wrapper" \
                LD="$(pwd)/ld-wrapper" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
-               LLVM_IAS=1
+               LLVM_IAS=1 \
+               V=1
 
           # [ -f "$GITHUB_WORKSPACE/android-kernel/out/android12-5.10/dist/Image" ] || { exit 1; }
           [ -f "$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image" ] || { exit 1; }
