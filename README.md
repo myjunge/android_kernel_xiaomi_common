@@ -7,9 +7,10 @@
  |____/ \___/|_|  \__,_|\____\___/|_|  \___|
 ```
 
-# Branch
+# Master Branch
 * [**Rebase**](https://github.com/dopaemon/android_kernel_xiaomi_common/tree/Rebase)
 * [**Lindroid - LXC**](https://github.com/dopaemon/android_kernel_xiaomi_common/tree/lindroid)
+* [**Other Branch**](https://github.com/dopaemon/android_kernel_xiaomi_common/branches)
 
 # Downloads
 * [**Release Github**](https://github.com/dopaemon/android_kernel_xiaomi_common/releases)
@@ -19,7 +20,6 @@
 ```bash
 git clone -b Rebase --single-branch --recurse-submodules https://github.com/dopaemon/android_kernel_xiaomi_common.git
 ```
-* [**Other Branch**](https://github.com/dopaemon/android_kernel_xiaomi_common/branches)
 
 # By
 * [**dopaemon**](https://github.com/dopaemon)
