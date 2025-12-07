@@ -46,6 +46,13 @@ on:
         - NonKSU
         - KSU
         - Both
+      USING_CCACHE:
+        description: 'Using CCACHE'
+        required: true
+        type: choice
+        options:
+        - Yes
+        - No
       ANYKERNEL_GIT:
         description: 'AnyKernel3 Git'
         required: true
@@ -226,6 +233,7 @@ jobs:
               $GITHUB_WORKSPACE/android-kernel/sm8450-modules
 
       - name: Cache Kernel
+        if: github.event.inputs.USING_CCACHE == 'Yes'
         id: cache-kernel
         uses: actions/cache@v4
         with:
@@ -248,6 +256,7 @@ jobs:
           git submodule update --init --recursive
 
       - name: Cache Clang
+        if: github.event.inputs.USING_CCACHE == 'Yes'
         id: cache-clang
         uses: actions/cache@v4
         with:
@@ -298,6 +307,7 @@ jobs:
           echo "CCACHE_BASEDIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
 
       - name: Get Cache CCACHE
+        if: github.event.inputs.USING_CCACHE == 'Yes'
         id: cache-ccache
         uses: actions/cache@v4
         with:
