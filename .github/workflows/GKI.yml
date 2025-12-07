@@ -49,6 +49,7 @@ on:
       USING_CCACHE:
         description: 'Using CCACHE'
         required: true
+        default: 'Yes'
         type: choice
         options:
         - Yes
