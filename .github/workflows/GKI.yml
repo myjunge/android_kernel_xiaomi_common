@@ -361,6 +361,7 @@ jobs:
           export PRELOAD_LIBS="$GITHUB_WORKSPACE/android-kernel/prebuilts/build-tools/lib64/libfakestat.so $GITHUB_WORKSPACE/android-kernel/prebuilts/build-tools/lib64/libfaketimeMT.so"
 
           unset DTC
+          export DTC="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin/dtc"
 
           cd $GITHUB_WORKSPACE/android-kernel
           cd ./common/
@@ -417,6 +418,7 @@ jobs:
                CC="ccache clang" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
                LLVM_IAS=1 \
+               DTC_EXT=dtc \
                gki_defconfig
 
           time make -j$(nproc --all) \
@@ -426,7 +428,8 @@ jobs:
                CC="$(pwd)/cc-wrapper" \
                LD="$(pwd)/ld-wrapper" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
-               LLVM_IAS=1
+               LLVM_IAS=1 \
+               DTC_EXT=dtc
 
           [ -f "$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image" ] || { exit 1; }
 
@@ -521,7 +524,6 @@ jobs:
                CC="ccache clang" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
                LLVM_IAS=1 \
-               DTC_EXT=dtc \
                gki_defconfig
 
           time make -j$(nproc --all) \
@@ -532,7 +534,6 @@ jobs:
                LD="$(pwd)/ld-wrapper" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
                LLVM_IAS=1 \
-               DTC_EXT=dtc \
                Image
 
           # [ -f "$GITHUB_WORKSPACE/android-kernel/out/android12-5.10/dist/Image" ] || { exit 1; }
