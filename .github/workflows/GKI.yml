@@ -521,6 +521,7 @@ jobs:
                CC="ccache clang" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
                LLVM_IAS=1 \
+               DTC_EXT=dtc \
                gki_defconfig
 
           time make -j$(nproc --all) \
@@ -531,6 +532,7 @@ jobs:
                LD="$(pwd)/ld-wrapper" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
                LLVM_IAS=1 \
+               DTC_EXT=dtc \
                Image
 
           # [ -f "$GITHUB_WORKSPACE/android-kernel/out/android12-5.10/dist/Image" ] || { exit 1; }
