@@ -278,9 +278,10 @@ jobs:
           # tar -xvf Clang-22.0.0git-20250928.tar.gz
           # rm -rf Clang-22.0.0git-20250928.tar.gz
           cd $GITHUB_WORKSPACE/android-kernel/prebuilts-master/clang/host/linux-x86/
-          aria2c -s16 -x16 -k1M https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang20-r547379/clang-r547379.zip -o clang.zip &&
-          unzip -q clang.zip -d clang-r416183b
-          rm -rf clang.zip
+          # aria2c -s16 -x16 -k1M https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang20-r547379/clang-r547379.zip -o clang.zip &&
+          # unzip -q clang.zip -d clang-r416183b
+          # rm -rf clang.zip
+          git clone -b 21 --single-branch --depth=1 https://gitlab.com/vantoman/playground-clang.git clang-r416183b
 
       - name: Setup Enviroment
         run: |
