@@ -360,6 +360,8 @@ jobs:
           export PATH="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin:$PATH"
           export PRELOAD_LIBS="$GITHUB_WORKSPACE/android-kernel/prebuilts/build-tools/lib64/libfakestat.so $GITHUB_WORKSPACE/android-kernel/prebuilts/build-tools/lib64/libfaketimeMT.so"
 
+          unset DTC
+
           cd $GITHUB_WORKSPACE/android-kernel
           cd ./common/
           git add -vA
@@ -406,8 +408,8 @@ jobs:
              cat arch/arm64/configs/vendor/debugfs.config >> arch/arm64/configs/gki_defconfig
           fi
 
-          # cd ../
-          # time CCACHE_EXEC=$(which ccache) CC="ccache clang" SKIP_MRPROPER=1 LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh -j$(nproc --all) || true
+          export DTC=$(pwd)/scripts/dtc/dtc
+
           make -j$(nproc --all) \
                LLVM=1 \
                ARCH=arm64 \
@@ -426,7 +428,6 @@ jobs:
                O=$GITHUB_WORKSPACE/android-kernel/out \
                LLVM_IAS=1
 
-          # [ -f "$GITHUB_WORKSPACE/android-kernel/out/android12-5.10/dist/Image" ] || { exit 1; }
           [ -f "$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image" ] || { exit 1; }
 
           cd $GITHUB_WORKSPACE/android-kernel
