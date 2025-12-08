@@ -429,7 +429,8 @@ jobs:
                LD="$(pwd)/ld-wrapper" \
                O=$GITHUB_WORKSPACE/android-kernel/out \
                LLVM_IAS=1 \
-               DTC_EXT=dtc
+               DTC_EXT=dtc \
+               DTC_FLAGS="-Wno-all"
 
           [ -f "$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image" ] || { exit 1; }
 
