@@ -605,7 +605,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate CCACHE
-        if: github.event.inputs.BUILDING_CCACHE == 'Enable'
+        if: (github.event.inputs.BUILDING_CCACHE == 'Enable' && github.event.inputs.BUILD_TARGET != 'Both')
         run: |
           cd $GITHUB_WORKSPACE/android-kernel/common/
 
