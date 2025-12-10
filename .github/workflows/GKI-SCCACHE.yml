@@ -1,0 +1,622 @@
+name: GKI SCCACHE | DoraCore Kernel Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      KERNEL_BRANCH:
+        description: 'DoraCore Branch'
+        required: true
+        default: 'Rebase'
+        type: choice
+        options:
+        - Rebase
+      KERNEL_GIT:
+        description: 'Kernel Source Code'
+        required: true
+        default: 'https://github.com/dopaemon/android_kernel_xiaomi_common.git'
+      BUILD_DEVICE:
+        description: 'Device Target'
+        required: true
+        default: 'mayfly'
+        type: choice
+        options:
+        - all
+        - mayfly
+        - cupid
+        - unicorn
+        - zeus
+        - diting
+        - marble
+        - mondrian
+        - thor
+        - zizhan
+        - ziyi
+        - ingres
+        - gki
+      MANIFEST_GIT:
+        description: 'Kernel Manifest Git'
+        required: true
+        default: 'https://github.com/dopaemon/android_kernel_xiaomi_common.git'
+      BUILD_TARGET:
+        description: 'Specify your Build Target (lindroid only KSU)'
+        required: true
+        default: 'KSU'
+        type: choice
+        options:
+        - NonKSU
+        - KSU
+        - Both
+      USING_CCACHE:
+        description: 'Using CCACHE'
+        required: true
+        default: 'Enable'
+        type: choice
+        options:
+        - Enable
+        - Disable
+      CLEAN_CCACHE:
+        description: 'Clean CCACHE'
+        required: true
+        default: 'Disable'
+        type: choice
+        options:
+        - Enable
+        - Disable
+      BUILDING_CCACHE:
+        description: 'Building CCACHE'
+        required: true
+        default: 'Disable'
+        type: choice
+        options:
+        - Enable
+        - Disable
+      RELEASE:
+        description: 'Status Release'
+        required: true
+        default: 'draft'
+        type: choice
+        options:
+        - draft
+        - prerelease
+        - release
+
+jobs:
+  cache-clear:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Clean CCACHE
+        if: github.event.inputs.CLEAN_CCACHE == 'Enable'
+        uses: easimon/wipe-cache@main
+
+  set-matrix:
+    needs: cache-clear
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Matrix Setup
+        id: set-matrix
+        shell: bash
+        env:
+          BUILD_DEVICE: ${{ github.event.inputs.BUILD_DEVICE }}
+        run: |
+          if [ "$BUILD_DEVICE" = "mayfly" ]; then
+            matrix='["mayfly"]'
+          elif [ "$BUILD_DEVICE" = "cupid" ]; then
+            matrix='["cupid"]'
+          elif [ "$BUILD_DEVICE" = "zeus" ]; then
+            matrix='["zeus"]'
+          elif [ "$BUILD_DEVICE" = "unicorn" ]; then
+            matrix='["unicorn"]'
+          elif [ "$BUILD_DEVICE" = "diting" ]; then
+            matrix='["diting"]'
+          elif [ "$BUILD_DEVICE" = "marble" ]; then
+            matrix='["marble"]'
+          elif [ "$BUILD_DEVICE" = "mondrian" ]; then
+            matrix='["mondrian"]'
+          elif [ "$BUILD_DEVICE" = "thor" ]; then
+            matrix='["thor"]'
+          elif [ "$BUILD_DEVICE" = "zizhan" ]; then
+            matrix='["zizhan"]'
+          elif [ "$BUILD_DEVICE" = "ziyi" ]; then
+            matrix='["ziyi"]'
+          elif [ "$BUILD_DEVICE" = "ingres" ]; then
+            matrix='["ingres"]'
+          elif [ "$BUILD_DEVICE" = "gki" ]; then
+            matrix='["gki"]'
+          elif [ "$BUILD_DEVICE" = "all" ]; then
+            matrix='["mayfly", "cupid", "unicorn", "zeus", "diting", "marble", "mondrian", "thor", "zizhan", "ziyi", "ingres", "gki"]'
+          fi
+
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+
+  create_release:
+    runs-on: ubuntu-latest
+
+    outputs:
+      tag: ${{ steps.set-tag.outputs.tag }}
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    permissions:
+      contents: write
+      discussions: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set tag as timestamp
+        id: set-tag
+        run: echo "tag=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.set-tag.outputs.tag }}
+          name: DoraCore Build ${{ steps.set-tag.outputs.tag }}
+          draft: ${{ github.event.inputs.RELEASE == 'draft' }}
+          prerelease: ${{ github.event.inputs.RELEASE == 'prerelease' }}
+          make_latest: ${{ github.event.inputs.RELEASE == 'release' }}
+          body: |
+            Build: DoraCore Kernel For GKI Linux 5.10.y
+            Linux: Linux 5.10.y
+            Type: GKI
+            Developer: dopaemon
+            Credits: ArianK16a, bachnxuan, Gelbpunkt, ztc1997, pzqqt, KernelToast, Arter97, ramabondanp, Gosth15, Flopster101, bheatleyyy, keosh1, n08i40k, ParsaAslaniYC, ...
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: [create_release, set-matrix]
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        device: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    permissions:
+      contents: write
+      discussions: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Check Initial Disk Space
+        run: |
+          echo "===== Initial Total Disk Space in GB ====="
+          df -BG
+
+      - name: Build Environment
+        run: |
+          TARGET="${{ github.event.inputs.BUILD_TARGET }}"
+          echo "BUILD_DATE=$(TZ=Asia/Ho_Chi_Minh date +'%Y-%m%d-%H%M')" >> $GITHUB_ENV
+          sudo apt-mark hold firefox
+          sudo apt-mark hold libc-bin
+          sudo apt purge man-db
+          sudo rm -rf /var/lib/man-db/auto-update
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            curl bison flex make binutils git perl gcc python3 \
+            python-is-python3 bc libssl-dev libelf-dev \
+            bc aria2 zip unzip ccache binutils-aarch64-linux-gnu \
+            tar which wget zip unzip sccache
+          cd $GITHUB_WORKSPACE
+          sudo wget -O /usr/bin/repo http://commondatastorage.googleapis.com/git-repo-downloads/repo
+          sudo chmod +x /usr/bin/repo
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
+          mkdir -p $GITHUB_WORKSPACE/android-kernel && cd $GITHUB_WORKSPACE/android-kernel
+          repo init --depth=1 --u ${{ github.event.inputs.KERNEL_GIT }} -b manifest
+          repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags
+          git clone -b build --single-branch --depth=1 https://github.com/dopaemon/android_kernel_xiaomi_common.git build
+          rm -rf .git .github .repo common
+          rm -rf ./build/_setup_env.sh
+          wget -O ./build/_setup_env.sh https://raw.githubusercontent.com/dopaemon/android_kernel_xiaomi_common/refs/heads/master/.github/scripts/_setup_env.sh
+          chmod +x ./build/_setup_env.sh
+          if [ "$TARGET" != "Both" ]; then
+             git clone -b master --depth=1 --single-branch https://github.com/dopaemon/Anykernel3.git ./AnyKernel3
+          else
+             git clone -b volume --depth=1 --single-branch https://github.com/dopaemon/Anykernel3.git ./AnyKernel3
+          fi
+          rm -rf ./AnyKernel3/.git
+          rm -rf ${{ github.workspace }}/android-kernel/prebuilts/build-tools
+          rm -rf ${{ github.workspace }}/android-kernel/prebuilts/kernel-build-tools
+          cd ${{ github.workspace }}/android-kernel/prebuilts
+          git clone -b build-tools --single-branch --depth=1 https://github.com/dopaemon/android_kernel_xiaomi_common.git ${{ github.workspace }}/android-kernel/prebuilts/build-tools
+          git clone -b build-tools --single-branch --depth=1 https://github.com/dopaemon/android_kernel_xiaomi_common.git ${{ github.workspace }}/android-kernel/prebuilts/kernel-build-tools
+          sudo mkdir -p /data
+          sudo chmod 7777 /data
+
+      - name: Get SM8450 Trees
+        run: |
+          git clone -b lineage-23.0 \
+              --single-branch \
+              --depth=1 \
+              https://github.com/dopaemon/android_kernel_xiaomi_sm8450-devicetrees.git \
+              $GITHUB_WORKSPACE/android-kernel/sm8450-devicetrees
+
+          git clone -b lineage-23.0 \
+              --single-branch \
+              --depth=1 \
+              https://github.com/dopaemon/android_kernel_xiaomi_sm8450-modules.git \
+              $GITHUB_WORKSPACE/android-kernel/sm8450-modules
+
+      - name: Cache Kernel
+        if: github.event.inputs.USING_CCACHE == 'Enable'
+        id: cache-kernel
+        uses: actions/cache@v4
+        with:
+          path: android-kernel/common
+          key: kernel-${{ github.event.inputs.KERNEL_BRANCH }}
+          restore-keys: |
+            kernel-
+
+      - name: Clone Kernel if cache missed
+        if: steps.cache-kernel.outputs.cache-hit != 'true'
+        run: |
+          git clone -b ${{ github.event.inputs.KERNEL_BRANCH }} --recurse-submodules -j$(nproc --all) --single-branch --no-tags ${{ github.event.inputs.KERNEL_GIT }} android-kernel/common
+
+      - name: Sync Kernel if cache complete
+        if: steps.cache-kernel.outputs.cache-hit == 'true'
+        run: |
+          cd android-kernel/common
+          git fetch origin Rebase
+          git reset --hard FETCH_HEAD
+          git submodule update --init --recursive
+
+      - name: Cache Clang
+        if: github.event.inputs.USING_CCACHE == 'Enable'
+        id: cache-clang
+        uses: actions/cache@v4
+        with:
+          path: android-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b
+          key: clang-${{ github.event.inputs.KERNEL_BRANCH }}
+          restore-keys: |
+            clang-
+
+      - name: Clone Clang if cache missed
+        if: steps.cache-clang.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/android-kernel/prebuilts-master/clang/host/linux-x86
+          cd $GITHUB_WORKSPACE/android-kernel/prebuilts-master/clang/host/linux-x86/
+          git clone -b 21 --single-branch --depth=1 https://gitlab.com/vantoman/playground-clang.git clang-r416183b
+
+      - name: Setup Enviroment
+        run: |
+          export PATH="${{ github.workspace }}/android-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b/bin:$PATH"
+          export PATH="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin:$PATH"
+          CLANG_DIR="${{ github.workspace }}/android-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b/bin"
+          CLANG_VERSION="$($CLANG_DIR/clang --version | head -n 1)"
+          LLD_VERSION="$($CLANG_DIR/ld.lld --version | head -n 1)"
+          echo "Prebuilts Infomation:"
+          echo "Clang Version: $CLANG_VERSION"
+          echo "LLD Version: $LLD_VERSION"
+
+      - name: First Setup SCCACHE
+        run: |
+          SCCACHE_DIR="${{ github.workspace }}/sccache"
+          mkdir -p $SCCACHE_DIR
+          sudo chmod 7777 $SCCACHE_DIR
+          echo "SCCACHE_DIR=$SCCACHE_DIR" >> $GITHUB_ENV
+          echo "SCCACHE_BASEDIR=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+
+      - name: Get Cache SCCACHE
+        if: github.event.inputs.USING_CCACHE == 'Enable'
+        id: cache-sccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.SCCACHE_DIR }}
+          key: sccache-${{ matrix.device }}-${{ github.event.inputs.KERNEL_BRANCH }}
+          restore-keys: |
+            sccache-${{ matrix.device }}-
+
+      - name: Get SCCACHE Redis
+        if: github.event.inputs.USING_CCACHE == 'Enable'
+        id: cache-sccache-redis
+        uses: actions/cache@v4
+        with:
+          path: /data/
+          key: sccache-redis-${{ matrix.device }}-${{ github.event.inputs.KERNEL_BRANCH }}
+          restore-keys: |
+            sccache-redis-${{ matrix.device }}-
+
+      - name: Setup Docker First Time
+        if: steps.cache-sccache-redis.outputs.cache-hit != 'true'
+        run: |
+          sudo docker run -d -p 6379:6379 redis
+
+      - name: Setup Docker
+        if: steps.cache-sccache-redis.outputs.cache-hit == 'true'
+        run: |
+          sudo docker run -d -p 6379:6379 -v /data/sccache.rdb:/data/dump.rdb redis
+
+      - name: Complete Setup SCCACHE
+        run: |
+          export SCCACHE_REDIS="redis://127.0.0.1:6379"
+          export SCCACHE_CACHE_SIZE="30G"
+          export SCCACHE_IDLE_TIMEOUT=0
+          sccache --start-server
+          sccache --show-stats
+          echo 'SCCACHE_REDIS="redis://127.0.0.1:6379"' >> $GITHUB_ENV
+          echo 'SCCACHE_CACHE_SIZE="30G"' >> $GITHUB_ENV
+          echo 'SCCACHE_IDLE_TIMEOUT=0' >> $GITHUB_ENV
+
+      - name: Fakestats - Faketime
+        run: |
+          export FAKESTAT="2025-05-25 12:00:00"
+          export FAKETIME="@2025-05-25 13:00:00"
+          echo "FAKESTAT=$FAKESTAT" >> $GITHUB_ENV
+          echo "FAKETIME=$FAKETIME" >> $GITHUB_ENV
+
+      - name: Build Selected Devices KSU
+        if: (github.event.inputs.BUILD_TARGET == 'KSU' || github.event.inputs.BUILD_TARGET == 'Both') && github.event.inputs.KERNEL_BRANCH == 'Rebase'
+        run: |
+          set -e
+          DEVICE="${{ matrix.device }}"
+          TARGET="${{ github.event.inputs.BUILD_TARGET }}"
+          ZIP_NAME=""
+          rm -rf $GITHUB_WORKSPACE/android-kernel/out
+
+          export KERNEL_USE_SCCACHE=1
+
+          export PATH="${{ github.workspace }}/android-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b/bin:$PATH"
+          export PATH="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin:$PATH"
+          export PRELOAD_LIBS="$GITHUB_WORKSPACE/android-kernel/prebuilts/build-tools/lib64/libfakestat.so $GITHUB_WORKSPACE/android-kernel/prebuilts/build-tools/lib64/libfaketimeMT.so"
+
+          unset DTC
+          export DTC="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin/dtc"
+
+          cd $GITHUB_WORKSPACE/android-kernel
+          cd ./common/
+          git add -vA
+          git reset --hard HEAD
+          rm -rf $GITHUB_WORKSPACE/android-kernel/out/android12-5.10
+          echo "CONFIG_KSU=y" >> arch/arm64/configs/gki_defconfig
+
+          rm -rf *-wrapper
+          rm -rf test-wrapper.sh
+          touch cc-wrapper
+          touch ld-wrapper
+          chmod +x *-wrapper
+          echo '#!/bin/bash' > cc-wrapper
+          echo 'export LD_PRELOAD="'$PRELOAD_LIBS'"' >> cc-wrapper
+          echo 'export FAKESTAT="'$FAKESTAT'"' >> cc-wrapper
+          echo 'export FAKETIME="'$FAKETIME'"' >> cc-wrapper
+          echo 'sccache clang "$@"' >> cc-wrapper
+          echo '#!/bin/bash' > ld-wrapper
+          echo 'export LD_PRELOAD="'$PRELOAD_LIBS'"' >> ld-wrapper
+          echo 'export FAKESTAT="'$FAKESTAT'"' >> ld-wrapper
+          echo 'export FAKETIME="'$FAKETIME'"' >> ld-wrapper
+          echo 'ld.lld "$@"' >> ld-wrapper
+          touch test-wrapper.sh
+          chmod +x test-wrapper.sh
+          echo '#!/bin/bash' > test-wrapper.sh
+          echo 'export LD_PRELOAD="'$PRELOAD_LIBS'"' >> test-wrapper.sh
+          echo 'export FAKESTAT="'$FAKESTAT'"' >> test-wrapper.sh
+          echo 'export FAKETIME="'$FAKETIME'"' >> test-wrapper.sh
+          echo 'echo ">>> Wrapper check enviroment."' >> test-wrapper.sh
+          echo 'exec "$@"' >> test-wrapper.sh
+          chmod +x test-wrapper.sh
+          ./test-wrapper.sh date
+          ./test-wrapper.sh stat ./Makefile
+          chmod +x cc-wrapper ld-wrapper
+          LD_PRELOAD=$PRELOAD_LIBS stat ./Makefile
+
+          rm ./android/abi_gki_protected_exports_* || true
+
+          if [ "$DEVICE" != "gki" ]; then
+             cat arch/arm64/configs/vendor/waipio_GKI.config >> arch/arm64/configs/gki_defconfig
+             cat arch/arm64/configs/vendor/xiaomi_GKI.config >> arch/arm64/configs/gki_defconfig
+             cat arch/arm64/configs/vendor/"$DEVICE"_GKI.config >> arch/arm64/configs/gki_defconfig
+             cat arch/arm64/configs/vendor/debugfs.config >> arch/arm64/configs/gki_defconfig
+          fi
+
+          export DTC=$(pwd)/scripts/dtc/dtc
+
+          make -j$(nproc --all) \
+               LLVM=1 \
+               ARCH=arm64 \
+               CROSS_COMPILE="aarch64-linux-gnu-" \
+               CC="sccache clang" \
+               O=$GITHUB_WORKSPACE/android-kernel/out \
+               LLVM_IAS=1 \
+               DTC_EXT=dtc \
+               gki_defconfig
+
+          time make -j$(nproc --all) \
+               LLVM=1 \
+               ARCH=arm64 \
+               CROSS_COMPILE="aarch64-linux-gnu-" \
+               CC="$(pwd)/cc-wrapper" \
+               LD="$(pwd)/ld-wrapper" \
+               O=$GITHUB_WORKSPACE/android-kernel/out \
+               LLVM_IAS=1 \
+               DTC_EXT=dtc \
+               DTC_FLAGS="-Wno-all" \
+               Image
+
+          [ -f "$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image" ] || { exit 1; }
+
+          sudo docker exec -it redis redis-cli SAVE
+          sudo docker cp redis:/data/dump.rdb /data/sccache.rdb
+
+          cd $GITHUB_WORKSPACE/android-kernel
+          cd ./common/
+
+          if [ "$TARGET" != "Both" ]; then
+             ZIP_NAME="DoraCore-${DEVICE}-KSU-5.10-A12-${BUILD_DATE}.zip"
+             cd $GITHUB_WORKSPACE/android-kernel/AnyKernel3
+             cp -r $GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image ./Image
+             zip -r9 "$ZIP_NAME" *
+             mv "$ZIP_NAME" $GITHUB_WORKSPACE/
+          else
+             cd $GITHUB_WORKSPACE/android-kernel/AnyKernel3
+             cp -r $GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image ./Image-kernelsu
+          fi
+
+      - name: Build Selected Devices NonKSU
+        if: (github.event.inputs.BUILD_TARGET == 'NonKSU' || github.event.inputs.BUILD_TARGET == 'Both') && github.event.inputs.KERNEL_BRANCH == 'Rebase'
+        run: |
+          set -e
+          DEVICE="${{ matrix.device }}"
+          TARGET="${{ github.event.inputs.BUILD_TARGET }}"
+          ZIP_NAME=""
+          rm -rf $GITHUB_WORKSPACE/android-kernel/out
+
+          export KERNEL_USE_SCCACHE=1
+
+          export PATH="${{ github.workspace }}/android-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b/bin:$PATH"
+          export PATH="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin:$PATH"
+          export PRELOAD_LIBS="$GITHUB_WORKSPACE/android-kernel/prebuilts/build-tools/lib64/libfakestat.so $GITHUB_WORKSPACE/android-kernel/prebuilts/build-tools/lib64/libfaketimeMT.so"
+
+          unset DTC
+          export DTC="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin/dtc"
+
+          cd $GITHUB_WORKSPACE/android-kernel
+          cd ./common/
+          git add -vA
+          git reset --hard HEAD
+          rm -rf $GITHUB_WORKSPACE/android-kernel/out/android12-5.10
+          echo "CONFIG_KSU=n" >> arch/arm64/configs/gki_defconfig
+
+          rm -rf *-wrapper
+          rm -rf test-wrapper.sh
+          touch cc-wrapper
+          touch ld-wrapper
+          chmod +x *-wrapper
+          echo '#!/bin/bash' > cc-wrapper
+          echo 'export LD_PRELOAD="'$PRELOAD_LIBS'"' >> cc-wrapper
+          echo 'export FAKESTAT="'$FAKESTAT'"' >> cc-wrapper
+          echo 'export FAKETIME="'$FAKETIME'"' >> cc-wrapper
+          echo 'sccache clang "$@"' >> cc-wrapper
+          echo '#!/bin/bash' > ld-wrapper
+          echo 'export LD_PRELOAD="'$PRELOAD_LIBS'"' >> ld-wrapper
+          echo 'export FAKESTAT="'$FAKESTAT'"' >> ld-wrapper
+          echo 'export FAKETIME="'$FAKETIME'"' >> ld-wrapper
+          echo 'ld.lld "$@"' >> ld-wrapper
+          touch test-wrapper.sh
+          chmod +x test-wrapper.sh
+          echo '#!/bin/bash' > test-wrapper.sh
+          echo 'export LD_PRELOAD="'$PRELOAD_LIBS'"' >> test-wrapper.sh
+          echo 'export FAKESTAT="'$FAKESTAT'"' >> test-wrapper.sh
+          echo 'export FAKETIME="'$FAKETIME'"' >> test-wrapper.sh
+          echo 'echo ">>> Wrapper check enviroment."' >> test-wrapper.sh
+          echo 'exec "$@"' >> test-wrapper.sh
+          chmod +x test-wrapper.sh
+          ./test-wrapper.sh date
+          ./test-wrapper.sh stat ./Makefile
+          chmod +x cc-wrapper ld-wrapper
+          LD_PRELOAD=$PRELOAD_LIBS stat ./Makefile
+
+          rm ./android/abi_gki_protected_exports_* || true
+
+          if [ "$DEVICE" != "gki" ]; then
+             cat arch/arm64/configs/vendor/waipio_GKI.config >> arch/arm64/configs/gki_defconfig
+             cat arch/arm64/configs/vendor/xiaomi_GKI.config >> arch/arm64/configs/gki_defconfig
+             cat arch/arm64/configs/vendor/"$DEVICE"_GKI.config >> arch/arm64/configs/gki_defconfig
+             cat arch/arm64/configs/vendor/debugfs.config >> arch/arm64/configs/gki_defconfig
+          fi
+
+          export DTC=$(pwd)/scripts/dtc/dtc
+
+          make -j$(nproc --all) \
+               LLVM=1 \
+               ARCH=arm64 \
+               CROSS_COMPILE="aarch64-linux-gnu-" \
+               CC="sccache clang" \
+               O=$GITHUB_WORKSPACE/android-kernel/out \
+               LLVM_IAS=1 \
+               DTC_EXT=dtc \
+               gki_defconfig
+
+          time make -j$(nproc --all) \
+               LLVM=1 \
+               ARCH=arm64 \
+               CROSS_COMPILE="aarch64-linux-gnu-" \
+               CC="$(pwd)/cc-wrapper" \
+               LD="$(pwd)/ld-wrapper" \
+               O=$GITHUB_WORKSPACE/android-kernel/out \
+               LLVM_IAS=1 \
+               DTC_EXT=dtc \
+               DTC_FLAGS="-Wno-all" \
+               Image
+
+          [ -f "$GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image" ] || { exit 1; }
+
+          sudo docker exec -it redis redis-cli SAVE
+          sudo docker cp redis:/data/dump.rdb /data/sccache.rdb
+
+          if [ "$TARGET" != "Both" ]; then
+             ZIP_NAME="DoraCore-${DEVICE}-NonKSU-5.10-A12-${BUILD_DATE}.zip"
+             cd $GITHUB_WORKSPACE/android-kernel/AnyKernel3
+             cp -r $GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image ./Image
+             zip -r9 "$ZIP_NAME" *
+             mv "$ZIP_NAME" $GITHUB_WORKSPACE/
+          else
+             cd $GITHUB_WORKSPACE/android-kernel/AnyKernel3
+             cp -r $GITHUB_WORKSPACE/android-kernel/out/arch/arm64/boot/Image ./Image-standard
+          fi
+
+      - name: Create Flashable Both Image
+        if: github.event.inputs.BUILD_TARGET == 'Both' && github.event.inputs.KERNEL_BRANCH != 'lindroid'
+        run: |
+          DEVICE="${{ matrix.device }}"
+          ZIP_NAME="DoraCore-${DEVICE}-5.10-A12-${BUILD_DATE}.zip"
+          cd $GITHUB_WORKSPACE/android-kernel/AnyKernel3
+          zip -r9 "$ZIP_NAME" *
+          mv "$ZIP_NAME" $GITHUB_WORKSPACE/
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.create_release.outputs.tag }}
+          draft: ${{ github.event.inputs.RELEASE == 'draft' }}
+          prerelease: ${{ github.event.inputs.RELEASE == 'prerelease' }}
+          make_latest: ${{ github.event.inputs.RELEASE == 'release' }}
+          files: DoraCore*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate CCACHE
+        if: (github.event.inputs.BUILDING_CCACHE == 'Enable' && github.event.inputs.BUILD_TARGET != 'Both')
+        run: |
+          cd $GITHUB_WORKSPACE/android-kernel/common/
+
+          rm -rf $GITHUB_WORKSPACE/android-kernel/out
+
+          make -j$(nproc --all) \
+               LLVM=1 \
+               LLVM_IAS=1 \
+               ARCH=arm64 \
+               CROSS_COMPILE="aarch64-linux-gnu-" \
+               CC="sccache clang" \
+               O=$GITHUB_WORKSPACE/android-kernel/out \
+               LD="ld.lld" \
+               HOSTLD=ld.lld \
+               gki_defconfig
+
+          time make -j$(nproc --all) \
+               LLVM=1 \
+               LLVM_IAS=1 \
+               ARCH=arm64 \
+               CROSS_COMPILE="aarch64-linux-gnu-" \
+               CC="$(pwd)/cc-wrapper" \
+               LD="$(pwd)/ld-wrapper" \
+               O=$GITHUB_WORKSPACE/android-kernel/out \
+               LD="ld.lld" \
+               HOSTLD=ld.lld \
+               Image
+
+      - name: Upload CCACHE Logs to artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.device }}-ccache-logs
+          path: ${{ github.workspace }}/*-*-ccache.log
