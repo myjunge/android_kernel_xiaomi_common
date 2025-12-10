@@ -590,6 +590,15 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/android-kernel/common/
 
+          export KERNEL_USE_SCCACHE=1
+
+          export PATH="${{ github.workspace }}/android-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b/bin:$PATH"
+          export PATH="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin:$PATH"
+          export PRELOAD_LIBS="$GITHUB_WORKSPACE/android-kernel/prebuilts/build-tools/lib64/libfakestat.so $GITHUB_WORKSPACE/android-kernel/prebuilts/build-tools/lib64/libfaketimeMT.so"
+
+          unset DTC
+          export DTC="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin/dtc"
+
           rm -rf $GITHUB_WORKSPACE/android-kernel/out
 
           make -j$(nproc --all) \
