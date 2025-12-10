@@ -54,6 +54,22 @@ on:
         options:
         - Enable
         - Disable
+      CLEAN_CCACHE:
+        description: 'Clean CCACHE'
+        required: true
+        default: 'Disable'
+        type: choice
+        options:
+        - Enable
+        - Disable
+      BUILDING_CCACHE:
+        description: 'Building CCACHE'
+        required: true
+        default: 'Disable'
+        type: choice
+        options:
+        - Enable
+        - Disable
       RELEASE:
         description: 'Status Release'
         required: true
@@ -65,7 +81,17 @@ on:
         - release
 
 jobs:
+  cache-clear:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Clean CCACHE
+        if: github.event.inputs.CLEAN_CCACHE == 'Enable'
+        uses: easimon/wipe-cache@main
+
   set-matrix:
+    needs: cache-clear
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -577,3 +603,39 @@ jobs:
           files: DoraCore*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate CCACHE
+        if: github.event.inputs.BUILDING_CCACHE == 'Enable'
+        run: |
+          cd $GITHUB_WORKSPACE/android-kernel/common/
+
+          rm -rf $GITHUB_WORKSPACE/android-kernel/out
+
+          make -j$(nproc --all) \
+               LLVM=1 \
+               LLVM_IAS=1 \
+               ARCH=arm64 \
+               CROSS_COMPILE="aarch64-linux-gnu-" \
+               CC="ccache clang" \
+               O=$GITHUB_WORKSPACE/android-kernel/out \
+               LD="ld.lld" \
+               HOSTLD=ld.lld \
+               gki_defconfig
+
+          time make -j$(nproc --all) \
+               LLVM=1 \
+               LLVM_IAS=1 \
+               ARCH=arm64 \
+               CROSS_COMPILE="aarch64-linux-gnu-" \
+               CC="$(pwd)/cc-wrapper" \
+               LD="$(pwd)/ld-wrapper" \
+               O=$GITHUB_WORKSPACE/android-kernel/out \
+               LD="ld.lld" \
+               HOSTLD=ld.lld \
+               Image
+
+      - name: Upload CCACHE Logs to artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.device }}-ccache-logs
+          path: ${{ github.workspace }}/*-*-ccache.log
