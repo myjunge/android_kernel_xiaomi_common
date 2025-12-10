@@ -366,6 +366,7 @@ jobs:
           rm -rf $GITHUB_WORKSPACE/android-kernel/out
 
           export KERNEL_USE_SCCACHE=1
+          export KERNEL_USE_CCACHE=0
 
           export PATH="${{ github.workspace }}/android-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b/bin:$PATH"
           export PATH="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin:$PATH"
@@ -472,6 +473,7 @@ jobs:
           rm -rf $GITHUB_WORKSPACE/android-kernel/out
 
           export KERNEL_USE_SCCACHE=1
+          export KERNEL_USE_CCACHE=0
 
           export PATH="${{ github.workspace }}/android-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b/bin:$PATH"
           export PATH="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin:$PATH"
@@ -591,6 +593,7 @@ jobs:
           cd $GITHUB_WORKSPACE/android-kernel/common/
 
           export KERNEL_USE_SCCACHE=1
+          export KERNEL_USE_CCACHE=0
 
           export PATH="${{ github.workspace }}/android-kernel/prebuilts-master/clang/host/linux-x86/clang-r416183b/bin:$PATH"
           export PATH="${{ github.workspace }}/android-kernel/prebuilts/build-tools/bin:$PATH"
